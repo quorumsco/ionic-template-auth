@@ -1,81 +1,73 @@
 angular.module('starter')
 
-.service('AuthService', function($q, $http, USER_ROLES) {
-  var LOCAL_TOKEN_KEY = 'zJvZq1AnRSyOrpVykuKFgQ';
-  var username = '';
-  var isAuthenticated = false;
-  var role = '';
-  var authToken;
+.service('AuthService', function($q, $http, API_ENDPOINT,$timeout) {
 
-  function loadUserCredentials() {
-    var token = window.localStorage.getItem(LOCAL_TOKEN_KEY);
-    if (token) {
-      useCredentials(token);
-    }
+
+  var authToken='';
+
+// ------------- verification de l'authentification ---------------------------------------------
+
+  function controlUserCredentials() {
+    console.debug("controlUserCredentials");
+    //console.debug("valeur de isAuthenticatedB:"+isAuthenticatedA());
+    auth();
+    console.debug("valeur de authToken:"+authToken);
+    $timeout(function() 
+      {
+        //alert("dd");
+      }, 3000)
+    .then(function() {
+      // You know the timeout is done here
+    console.debug("valeur de authToken:"+authToken);
+        
+      });
   }
 
-  function storeUserCredentials(token) {
-    window.localStorage.setItem(LOCAL_TOKEN_KEY, token);
-    useCredentials(token);
-  }
+// ------------- verification de l'authentification ---------------------------------------------
 
-  function useCredentials(token) {
-    //username = token.split('.')[0];
-    isAuthenticated = true;
-    authToken = token;
-    console.debug(token);
+  var auth = function () {
+    console.debug("enter var auth");
 
-    if (username == 'admin') {
-      role = USER_ROLES.admin
-    }
-    if (username == 'user') {
-      role = USER_ROLES.public
-    }
-    else {
-      role = USER_ROLES.public
-    }
-
-    // Set the token as header for your requests!
-    $http.defaults.headers.common['X-Auth-Token'] = token;
-  }
-
-  function destroyUserCredentials() {
-    authToken = undefined;
-    username = '';
-    isAuthenticated = false;
-    $http.defaults.headers.common['X-Auth-Token'] = undefined;
-    window.localStorage.removeItem(LOCAL_TOKEN_KEY);
-  }
-
-
-/*
-  var login = function(name, pw) {
-   user = {
-    name: name,
-    password: pw
-  };
-    console.debug(name);
-    console.debug(user);
-    return $q(function(resolve, reject) {
-      console.debug(user);
-      if ((name == 'admin' && pw == '1') || (name == 'user' && pw == '1')) {
-        // Make a request and receive your auth token from your server
-        storeUserCredentials(name + '.yourServerToken');
-        resolve('Login success.');
-      } else {
-        reject('Login Failed.');
-      }
-    });
-  };
-*/
- 
-  var login = function(name, pw) {
-    return $q(function(resolve, reject) {
       var req = {
         async: true,
         crossDomain: true,
+        method: 'GET',
+        url: API_ENDPOINT.url + '/me',
+        headers: {
+          'accept': 'application/json',
+          'cache-control': 'no-cache'
+         }
+      }
+
+      $http(req)
+      .success(function(result) {
+        console.debug("resultat /me: "+result.status);
+        authToken="true";
+      })
+      .error(function(result)
+      {
+        console.debug("resultat /me: ECHEC");
+        authToken="false";
+      })
+      .finally(function(){
+      console.debug("authToken renvoyé de auth():"+authToken);
+      //return authToken;
+    });
+  }
+
+
+
+// ------------- gestion du login ---------------------------------------------
+ 
+  var login = function(name, pw) {
+    console.debug("enter var login");
+    return $q(function(resolve, reject) {
+      var req = {
+        async: false,
+        crossDomain: true,
         method: 'POST',
-        url: 'https://api.quorumapps.com/session',
+        //url: 'https://api.quorumapps.com/session',
+        url: API_ENDPOINT.url + '/session',
         headers: {
           'accept': 'application/json',
           'cache-control': 'no-cache',
@@ -87,40 +79,60 @@ angular.module('starter')
         }
       }
       $http(req).then(function(result) {
-        console.debug(result);
-        storeUserCredentials(result.data);
+        console.debug("ok login");
+        authToken="true";
         resolve(result.data);
       }, function errorCallback(result)
       {
+        console.debug("ko login");
         console.debug(result.data);
         reject(result.data);
       });
     });
   };
-
+// ------------- gestion du logout ---------------------------------------------
   var logout = function() {
-    destroyUserCredentials();
+    return $q(function(resolve, reject) {
+      var req = {
+        async: false,
+        crossDomain: true,
+        method: 'DELETE',
+        //url: 'https://api.quorumapps.com/session',
+        url: API_ENDPOINT.url + '/session',
+        headers: {
+          'accept': 'application/json',
+          'cache-control': 'no-cache',
+         }
+      }
+      $http(req).then(function(result) {
+        console.debug("ok logout");
+        authToken="false";
+        resolve();
+      }, function errorCallback(result)
+      {
+        console.debug("ko logout");
+        authToken="false";
+        reject();
+      });
+    });
   };
 
-  var isAuthorized = function(authorizedRoles) {
-    if (!angular.isArray(authorizedRoles)) {
-      authorizedRoles = [authorizedRoles];
-    }
-    return (isAuthenticated && authorizedRoles.indexOf(role) !== -1);
-  };
 
-  loadUserCredentials();
+
+// ----------- appel automatique à chaque page ----------------------------
+  //controlUserCredentials();
+
+// ---------------------------------------------
 
   return {
     login: login,
     logout: logout,
-    isAuthorized: isAuthorized,
-    isAuthenticated: function() {return isAuthenticated;},
-    username: function() {return username;},
-    role: function() {return role;}
+    auth: auth,
+    authToken: function() {return authToken;}
   };
 })
 
+// --------- interceptor -----------------------------------------------------
 
 .factory('AuthInterceptor', function ($rootScope, $q, AUTH_EVENTS) {
   return {
@@ -136,5 +148,44 @@ angular.module('starter')
 
 .config(function ($httpProvider) {
   $httpProvider.interceptors.push('AuthInterceptor');
-});
+})
 
+// --------- getcontact-----------------------------------------------------
+
+.factory('ContactService', ['$http','$q',function($http,$q){
+
+    return {
+        getContacts:function() 
+        {
+            var deferred = $q.defer();
+            $http({
+                //url: API_ENDPOINT.url + '/contacts',
+                url: 'http://localhost:8080/contacts',
+                dataType: 'json',
+                method: 'GET',
+                data: '',
+                withCredentials: true,
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            }).success(function(res)
+            {
+                deferred.resolve(res.data.contacts);
+            }).error(function(error){
+            });
+          return deferred.promise;
+        },
+        getContact:function(id) {
+            var deferred = $q.defer();
+            //temp
+            var contact = {
+                id:id,
+                surname:"Contact "+id,
+                prenom:"le prénom pour"+id,
+            };
+            deferred.resolve(contact);
+            return deferred.promise;
+        }   
+    };
+
+}]);

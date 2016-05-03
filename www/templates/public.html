@@ -1,5 +1,24 @@
-<ion-view view-title="Public" name="dashboard-view">
-  <ion-content class="padding">
-      This is open for everyone!
-  </ion-content>
+
+<ion-view title="Les citoyens">
+    <ion-content padding="true" class="has-header">
+        <form class="list">
+            <label class="item item-input" name="search">
+                <i class="icon ion-search placeholder-icon"></i>
+                <input type="search" placeholder="Rechercher une adresse, un nom, un lieu">
+            </label>
+            <button id="lesCitoyens-button9" style="font-weight:300;" class="button button-energized button-small button-block icon-right ion-android-locate">Recherche GéoLocalisée</button>
+            <ion-item class="item-divider">Citoyens</ion-item>
+            <ion-list>
+                <ion-item ng-repeat="contact in contacts" ui-sref="singleContact({id:contact.id})">{{contact.surname}}</ion-item>
+            </ion-list>
+            <button id="lesCitoyens-button5" class="button button-calm button-small button-block">Créer un nouveau citoyen</button>
+            <ion-item class="item-divider">Adresses</ion-item>
+            <ion-list>
+                <ion-item>39 rue Dufour</ion-item>
+                <ion-item>41 rue Dufour</ion-item>
+                <ion-item>12 rue Marvudule</ion-item>
+            </ion-list>
+            <button id="lesCitoyens-button6" class="button button-calm button-small button-block">Créer une nouvelle adresse</button>
+        </form>
+    </ion-content>
 </ion-view>

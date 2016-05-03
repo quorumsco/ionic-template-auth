@@ -20,7 +20,7 @@ angular.module('starter', ['ionic'])
   });
 })
 
-.config(function ($stateProvider, $urlRouterProvider, USER_ROLES) {
+.config(function ($stateProvider, $urlRouterProvider) {
   $stateProvider
   .state('login', {
     url: '/login',
@@ -45,9 +45,15 @@ angular.module('starter', ['ionic'])
     url: 'main/public',
     views: {
         'public-tab': {
-          templateUrl: 'templates/public.html'
+          templateUrl: 'templates/public.html',
+          controller: 'publicCtrl'
         }
     }
+  })
+  .state('singleContact', {
+    url: '/singleContact/:id',
+    templateUrl: 'templates/singleContact.html',
+    controller: 'singleContactCtrl'
   })
   .state('main.admin', {
     url: 'main/admin',
@@ -55,12 +61,14 @@ angular.module('starter', ['ionic'])
         'admin-tab': {
           templateUrl: 'templates/admin.html'
         }
-    },
-    data: {
-      authorizedRoles: [USER_ROLES.admin]
     }
   });
-  $urlRouterProvider.otherwise('/main/dash');
+
+  $urlRouterProvider.otherwise(function ($injector, $location) {
+    var $state = $injector.get("$state");
+    $state.go("main.dash");
+  });
+
 })
 
 //permet de gérer le fait qu'angular ne post que du JSON
@@ -85,23 +93,35 @@ angular.module('starter', ['ionic'])
 }])
 
 
-.run(function ($rootScope, $state, AuthService, AUTH_EVENTS) {
+.run(function ($rootScope, $state, AuthService, AUTH_EVENTS,$timeout) {
   $rootScope.$on('$stateChangeStart', function (event,next, nextParams, fromState) {
+  //console.debug("AuthService.authToken:"+AuthService.authToken);
+  //AuthService.auth().then(function(val){AuthService.authToken});
+  console.debug("STATE CHANGE / authToken : "+AuthService.authToken());
 
-    if ('data' in next && 'authorizedRoles' in next.data) {
-      var authorizedRoles = next.data.authorizedRoles;
-      if (!AuthService.isAuthorized(authorizedRoles)) {
-        event.preventDefault();
-        $state.go($state.current, {}, {reload: true});
-        $rootScope.$broadcast(AUTH_EVENTS.notAuthorized);
-      }
-    }
-
-    if (!AuthService.isAuthenticated()) {
-      if (next.name !== 'login') {
-        event.preventDefault();
-        $state.go('login');
-      }
-    }
+    if (AuthService.authToken()!="true") 
+    {
+      AuthService.auth();
+      $timeout(function() 
+      {
+        //alert("dd");
+      }, 1000)
+      .then(function() {
+        console.debug("DANS TIMEOUT/valeur de authToken:"+AuthService.authToken());
+        if (AuthService.authToken()!="true") 
+        {
+              if (next.name !== 'login') {
+                  event.preventDefault();
+                  console.debug("route vers login");
+                  $state.go('login');
+              }
+        }
+      });
+      
+    }else 
+        {
+          console.debug("loguer!!!!");
+          //$state.go('main/dash');
+        }
   });
 });

@@ -1,17 +1,9 @@
 angular.module('starter')
 
-// .controller('AppCtrl', function() {})
-// .controller('LoginCtrl', function() {})
-// .controller('DashCtrl', function() {});
-.controller('AppCtrl', function($scope, $state, $ionicPopup, AuthService, AUTH_EVENTS) {
-  $scope.username = AuthService.username();
 
-  $scope.$on(AUTH_EVENTS.notAuthorized, function(event) {
-    var alertPopup = $ionicPopup.alert({
-      title: 'Unauthorized!',
-      template: 'You are not allowed to access this resource.'
-    });
-  });
+.controller('AppCtrl', function($scope, $state, $ionicPopup, AuthService, AUTH_EVENTS) {
+
+  console.debug('AppCtrl');
 
   $scope.$on(AUTH_EVENTS.notAuthenticated, function(event) {
     AuthService.logout();
@@ -21,28 +13,15 @@ angular.module('starter')
       template: 'Sorry, You have to login again.'
     });
   });
-
-  $scope.$on(AUTH_EVENTS.notLogged, function(event) {
-    AuthService.logout();
-    $state.go('login');
-    var alertPopup = $ionicPopup.alert({
-      title: 'XXX',
-      template: 'XXX'
-    });
-  });
-
-  $scope.setCurrentUsername = function(name) {
-    $scope.username = name;
-  };
 })
 
 .controller('LoginCtrl', function($scope, $state, $ionicPopup, AuthService) {
   $scope.data = {};
 
   $scope.login = function(data) {
-    AuthService.login(data.username, data.password).then(function(authenticated) {
+    AuthService.login(data.username, data.password).then(function() {
+      console.debug("ok controller login");
       $state.go('main.dash', {}, {reload: true});
-      $scope.setCurrentUsername(data.username);
     }, function(err) {
       var alertPopup = $ionicPopup.alert({
         title: 'Login failed!',
@@ -57,29 +36,33 @@ angular.module('starter')
     AuthService.logout();
     $state.go('login');
   };
+})
 
-  $scope.performValidRequest = function() {
-    $http.get('http://localhost:8100/valid').then(
-      function(result) {
-        $scope.response = result;
-      });
+.controller('singleContactCtrl', function($scope,$stateParams,ContactService) {
+  $scope.contact = {};
+    ContactService.getContact($stateParams.id).then(function(res) {
+        $scope.contact = res;  
+    });
+
+})
+
+.controller('publicCtrl', function($scope,ContactService,$ionicLoading) {
+  $scope.show = function() {
+    $ionicLoading.show({
+      template: '<p>Loading...</p><ion-spinner></ion-spinner>'
+    });
   };
 
-  $scope.performUnauthorizedRequest = function() {
-    $http.get('http://localhost:8100/notauthorized').then(
-      function(result) {
-        // No result here..
-      }, function(err) {
-        $scope.response = err;
-      });
+  $scope.hide = function(){
+        $ionicLoading.hide();
   };
 
-  $scope.performInvalidRequest = function() {
-    $http.get('http://localhost:8100/notauthenticated').then(
-      function(result) {
-        // No result here..
-      }, function(err) {
-        $scope.response = err;
-      });
-  };
-});
+  $scope.show($ionicLoading);
+  $scope.contacts = [];
+  ContactService.getContacts().then(function(res)
+  {
+    console.debug(res);
+    $scope.contacts =res;
+    $scope.hide($ionicLoading);
+  });
+})

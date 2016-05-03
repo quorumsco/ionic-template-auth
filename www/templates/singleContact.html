@@ -1,0 +1,40 @@
+<ion-view title="singleContact">
+    <ion-nav-title>{{contact.surname}}</ion-nav-title>
+    <ion-content padding="true" class="has-header">
+        <form class="list">
+            <label class="item item-input" name="Name">
+                <span class="input-label">Nom</span>
+                <input type="text" placeholder="Durant">
+            </label>
+            <label class="item item-input" name="Surname">
+                <span class="input-label">Prénom</span>
+                <input type="text" placeholder={{contact.prenom}}>
+            </label>
+            <label class="item item-input" name="Surname">
+                <span class="input-label">Email</span>
+                <input type="email" placeholder="jbaptiste.daniel@gmail.com">
+            </label>
+            <label class="item item-input" name="Phone">
+                <span class="input-label">Téléphone</span>
+                <input type="tel" placeholder="06 37 58 30 60">
+            </label>
+            <label class="item item-input" name="NumVoie">
+                <span class="input-label">Numéro de rue</span>
+                <input type="text" placeholder="39">
+            </label>
+            <label class="item item-input" name="LibVoie">
+                <span class="input-label">Libellé de la rue</span>
+                <input type="text" placeholder="rue saint françois">
+            </label>
+            <label class="item item-input" name="PostalCode">
+                <span class="input-label">Code Postal</span>
+                <input type="number" placeholder="33 000">
+            </label>
+            <label class="item item-input" name="City">
+                <span class="input-label">Ville</span>
+                <input type="text" placeholder="Bordeaux">
+            </label>
+            <button id="romainDurant-button7" class="button button-calm button-small button-block">Enregistrer</button>
+        </form>
+    </ion-content>
+</ion-view>
